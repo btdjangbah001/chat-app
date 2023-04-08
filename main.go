@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/btdjangbah001/chat-app/model"
+
+	"github.com/btdjangbah001/chat-app/models"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	user := model.User{}
+	user := models.User{}
 	fmt.Println(user)
 	router := gin.Default()
 

@@ -1,4 +1,4 @@
-package model
+package models
 
 type Group struct {
 	ID          uint   `json:"id" gorm:"primary_key"`
@@ -32,6 +32,27 @@ func (group *Group) GetGroup() (err error) {
 		return err
 	}
 	return nil
+}
+
+func getGroups(groupIDs *[]uint) (*[]Group, error) {
+	var groups []Group
+	err := DB.Where("id IN (?)", groupIDs).Find(&groups).Error
+	if err != nil {
+		return nil, err
+	}
+	return &groups, nil
+}
+
+func GetGroupsForTwoUsers(user1ID uint, user2ID uint) (*[]Group, error) {
+	groupIDs, err := CheckCommonMembershipForTwoUsers(user1ID, user2ID)
+	if err != nil {
+		return nil, err
+	}
+	groups, err := getGroups(groupIDs)
+	if err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
 // func (group *Group) UpdateGroupDescription() (err error) {

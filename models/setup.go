@@ -1,4 +1,4 @@
-package model
+package models
 
 import (
 	"gorm.io/driver/postgres"
@@ -26,6 +26,11 @@ func ConnectDatabase() {
 	}
 
 	err = database.AutoMigrate(&Message{})
+	if err != nil {
+		return
+	}
+
+	err = database.AutoMigrate(&Membership{})
 	if err != nil {
 		return
 	}
