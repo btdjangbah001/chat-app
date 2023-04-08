@@ -2,17 +2,22 @@ package models
 
 type User struct {
 	ID       uint   `json:"id" gorm:"primary_key"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" gorm:"unique_index;not null"`
+	Email    string `json:"email" gorm:"unique_index;not null"`
+	Password string `json:"password" gorm:"not null"`
 	About    string `json:"about"`
 }
 
-type UserLogin struct {
+type UserSignUp struct {
 	Username        string `json:"username"`
 	Email           string `json:"email"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirm_password"`
+}
+
+type UserLogin struct {
+	UserField string `json:"user_field"`
+	Password string `json:"password"`
 }
 
 func (user *User) CreateUser() (err error) {
@@ -50,10 +55,10 @@ func (user *User) DeleteUser() (err error) {
 	return nil
 }
 
-func GetUserByUsername() (*User, error) {
+func GetUserByUsername(username string) (*User, error) {
 	var user User
 
-	err := DB.Where("username = ?", user.Username).First(&user).Error
+	err := DB.Where("username = ?", username).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -77,4 +82,12 @@ func GetUsersForGroup(groupID uint) (*[]User, error) {
 		return nil, err
 	}
 	return &users, nil
+}
+
+func UsernameOrEmailExists(user *UserSignUp) (bool, error) {
+	err := DB.Where("username = ? OR email = ?", user.Username, user.Email).First(&user).Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
