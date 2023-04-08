@@ -1,11 +1,14 @@
 package models
 
+import "github.com/gorilla/websocket"
+
 type User struct {
-	ID       uint   `json:"id" gorm:"primary_key"`
-	Username string `json:"username" gorm:"unique_index;not null"`
-	Email    string `json:"email" gorm:"unique_index;not null"`
-	Password string `json:"password" gorm:"not null"`
-	About    string `json:"about"`
+	ID       uint            `json:"id" gorm:"primary_key"`
+	Username string          `json:"username" gorm:"unique_index;not null"`
+	Email    string          `json:"email" gorm:"unique_index;not null"`
+	Password string          `json:"password" gorm:"not null"`
+	About    string          `json:"about"`
+	Ws       *websocket.Conn `json:"ws"`
 }
 
 type UserSignUp struct {
@@ -17,7 +20,7 @@ type UserSignUp struct {
 
 type UserLogin struct {
 	UserField string `json:"user_field"`
-	Password string `json:"password"`
+	Password  string `json:"password"`
 }
 
 func (user *User) CreateUser() (err error) {
@@ -28,7 +31,7 @@ func (user *User) CreateUser() (err error) {
 	return nil
 }
 
-func GetUser(id string) (*User, error) {
+func GetUser(id uint) (*User, error) {
 	var user User
 
 	err := DB.Where("id = ?", id).First(&user).Error
@@ -39,7 +42,7 @@ func GetUser(id string) (*User, error) {
 }
 
 func (user *User) UpdateUser(updateUser *User) (err error) {
-	
+
 	err = DB.Model(&user).Where("id = ?", user.ID).Updates(updateUser).Error
 	if err != nil {
 		return err
@@ -90,4 +93,12 @@ func UsernameOrEmailExists(user *UserSignUp) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func UpdateUserWebsocket(user *User, ws *websocket.Conn) error {
+	err := DB.Model(&user).Where("id = ?", user.ID).Update("ws", ws).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }

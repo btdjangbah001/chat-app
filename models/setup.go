@@ -25,7 +25,7 @@ func ConnectDatabase() {
 		return
 	}
 
-	err = database.AutoMigrate(&Message{})
+	err = database.AutoMigrate(&UnsentMessage{})
 	if err != nil {
 		return
 	}

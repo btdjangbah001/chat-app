@@ -67,7 +67,7 @@ func GetMembershipsForUser(userID uint) (*[]uint, error) {
 	return &groupIDs, nil
 }
 
-func GetMembershipsForGroup(groupID uint) (*[]uint, error) {
+func GetGroupParticipants(groupID uint) (*[]uint, error) {
 	var memberships []Membership
 	err := DB.Where("group_id = ?", groupID).Find(&memberships).Error
 	if err != nil {
