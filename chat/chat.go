@@ -2,6 +2,7 @@ package chat
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -10,31 +11,26 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type connection struct {
-	ws     *websocket.Conn // The WebSocket connection
-	userId uint            // The ID of the user who made the connection
-}
-
-var connections = make(map[*connection]bool) // Map of all connections
+var connections = make(map[uint]*websocket.Conn)
 
 var connectionsMutex sync.Mutex
 
-func addConnection(conn *connection) {
+func addConnection(userId uint, conn *websocket.Conn) {
 	// Lock the mutex to synchronize access to the connections map
 	connectionsMutex.Lock()
 	defer connectionsMutex.Unlock()
 
 	// Add the connection to the map of active connections
-	connections[conn] = true
+	connections[userId] = conn
 
 	// Set a close handler for the WebSocket connection to remove it from the map when it is closed
-	conn.ws.SetCloseHandler(func(code int, text string) error {
+	conn.SetCloseHandler(func(code int, text string) error {
 		// Lock the mutex to synchronize access to the connections map
 		connectionsMutex.Lock()
 		defer connectionsMutex.Unlock()
 
 		// Remove the connection from the map of active connections
-		delete(connections, conn)
+		delete(connections, userId)
 
 		return nil
 	})
@@ -53,24 +49,26 @@ func ChatHandler(c *gin.Context) {
 	// Upgrade the TCP connection to a WebSocket connection
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		// Handle error
+		_ = fmt.Errorf("error upgrading request to WebSocket: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
 		return
 	}
-	defer ws.Close()
+	// defer ws.Close()
 
 	val, exists := c.Get("user")
 	if !exists {
+		_ = fmt.Errorf("error getting user from context")
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 	user := val.(*models.User)
 
 	// Add the connection to the map of connections
-	addConnection(&connection{ws, user.ID})
-	user.Ws = ws
+	addConnection(user.ID, ws)
+	// user.Ws = ws
 
-	err = models.UpdateUserWebsocket(user, ws)
-	if err != nil {
+	if err = sendUnreadMessages(user); err != nil {
+		_ = fmt.Errorf("error sending unread messages: %v", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
 		return
 	}
@@ -83,9 +81,11 @@ func ChatHandler(c *gin.Context) {
 		for {
 			_, messageBytes, err := ws.ReadMessage()
 			if err != nil {
+				_ = fmt.Errorf("error reading message from WebSocket: %v", err)
 				// Handle the error
 				continue
 			}
+			fmt.Printf(string(messageBytes))
 
 			messageChan <- messageBytes
 		}
@@ -98,14 +98,18 @@ func ChatHandler(c *gin.Context) {
 			var message models.Message
 			err = json.Unmarshal(messageBytes, &message)
 			if err != nil {
+				_ = fmt.Errorf("error unmarshalling message: %v", err)
 				// Handle the error
 				continue
 			}
+			fmt.Printf(message.Content)
 
 			switch message.Type {
 			case models.PRIVATE:
+				fmt.Printf("private")
 				err := sendMessage(message.RecipientID, &message)
 				if err != nil {
+					_ = fmt.Errorf("error sending message: %v", err)
 					// Handle the error
 					continue
 				}
@@ -114,6 +118,7 @@ func ChatHandler(c *gin.Context) {
 				// Send the message to all connections that belong to the group
 				groupParticipants, err := models.GetGroupParticipants(message.RecipientID)
 				if err != nil {
+					_ = fmt.Errorf("error getting group participants: %v", err)
 					// Handle the error
 					continue
 				}
@@ -128,32 +133,27 @@ func ChatHandler(c *gin.Context) {
 			}
 		}
 	}()
+}
 
-	// Logic for failed messages to be sent again will be implemented here
+func sendUnreadMessages(user *models.User) error {
+	// Check the message queue for unsent messages
+	unsentMessages, _ := models.GetUnreadMessagesForUser(user.ID)
 
-	// for {
-	// 	//get messaged from the db that eblongs to the user and send it to the user
+	// Send any unsent messages to the user
+	for _, unsentMessage := range *unsentMessages {
+		message := models.Message{
+			Content:        unsentMessage.Content,
+			RecipientID:    unsentMessage.RecipientID,
+			SenderID:       unsentMessage.SenderID,
+			Type:           unsentMessage.Type,
+			SenderUsername: unsentMessage.SenderUsername,
+		}
 
-	// 	// Check the message queue for unsent messages
-	// 	unsentMessages, _ := models.GetUnreadMessagesForUser(user.ID)
-
-	// 	// If there are no unsent messages, wait for new messages to arrive on the channel
-	// 	if len(*unsentMessages) == 0 {
-	// 		select {
-	// 		case message := <-messageChan:
-	// 			// Process the message (send to the appropriate recipients, store in the database, etc.)
-	// 		}
-	// 	}
-
-	// 	// Send any unsent messages to the user
-	// 	for _, message := range unsentMessages {
-	// 		err := conn.ws.WriteMessage(websocket.TextMessage, []byte(message))
-	// 		if err != nil {
-	// 			// Handle the error
-	// 			break
-	// 		}
-	// 	}
-	// }
+		if err := sendMessage(user.ID, &message); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func keepUnsentMessages(message *models.UnsentMessage) error {
@@ -165,22 +165,31 @@ func keepUnsentMessages(message *models.UnsentMessage) error {
 }
 
 func sendMessage(recipient_id uint, message *models.Message) error {
-	recipient, err := models.GetUser(message.RecipientID)
-	if err != nil {
-		// Handle the error
-		return err
-	}
+	// recipient, err := models.GetUser(message.RecipientID)
+	// if err != nil {
+	// 	// Handle the error
+	// 	return err
+	// }
+	var ws *websocket.Conn
 
-	if _, ok := connections[&connection{recipient.Ws, recipient.ID}]; !ok {
+	ws, ok := connections[recipient_id]
+	if !ok {
 		unsentMessage := models.UnsentMessage{
-			Content:     message.Content,
-			RecipientID: message.RecipientID,
-			SenderID:    message.SenderID,
-			Type:        message.Type,
+			Content:        message.Content,
+			RecipientID:    message.RecipientID,
+			SenderID:       message.SenderID,
+			SenderUsername: message.SenderUsername,
+			Type:           message.Type,
 		}
 		keepUnsentMessages(&unsentMessage)
 	} else {
-		err = recipient.Ws.WriteJSON(message)
+		clientMessage := models.ClientMessage{
+			Content:        message.Content,
+			SenderUsername: message.SenderUsername,
+			Type:           message.Type,
+			GroupID:        message.GroupID,
+		}
+		err := ws.WriteJSON(clientMessage)
 		if err != nil {
 			// Handle the error
 			return err

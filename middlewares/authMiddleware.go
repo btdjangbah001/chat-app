@@ -11,7 +11,8 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
+		// tokenString := c.GetHeader("Authorization")
+		tokenString := c.Param("token")
 		if tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
@@ -21,7 +22,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("my-secret-key"), nil // replace with your own secret key
+			return []byte("my_secret_key"), nil // replace with your own secret key
 		})
 
 		if err != nil {
@@ -30,15 +31,15 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			userID := claims["id"].(uint)
+			userID := claims["UserID"].(float64)
 			var user *models.User
-			user, err = models.GetUser(userID)
+			user, err = models.GetUser(uint(userID))
 
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 				return
 			}
-			
+
 			c.Set("user", user)
 			c.Next()
 		} else {

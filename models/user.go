@@ -3,12 +3,13 @@ package models
 import "github.com/gorilla/websocket"
 
 type User struct {
-	ID       uint            `json:"id" gorm:"primary_key"`
-	Username string          `json:"username" gorm:"unique_index;not null"`
-	Email    string          `json:"email" gorm:"unique_index;not null"`
-	Password string          `json:"password" gorm:"not null"`
-	About    string          `json:"about"`
-	Ws       *websocket.Conn `json:"ws"`
+	ID             uint   `json:"id" gorm:"primary_key"`
+	Username       string `json:"username" gorm:"unique_index;not null"`
+	Email          string `json:"email" gorm:"unique_index;not null"`
+	Password       string `json:"password" gorm:"not null"`
+	About          string `json:"about"`
+	ProfilePicture string `json:"profile_picture"`
+	// Ws             *websocket.Conn `json:"ws"`
 }
 
 type UserSignUp struct {
@@ -21,6 +22,16 @@ type UserSignUp struct {
 type UserLogin struct {
 	UserField string `json:"user_field"`
 	Password  string `json:"password"`
+}
+
+type UpdateAbout struct {
+	ID    uint   `json:"id"`
+	About string `json:"about"`
+}
+
+type UpdateProfilePicture struct {
+	ID             uint   `json:"id"`
+	ProfilePicture string `json:"profile_picture"`
 }
 
 func (user *User) CreateUser() (err error) {

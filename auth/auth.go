@@ -14,31 +14,31 @@ import (
 var jwtKey = []byte("my_secret_key")
 
 type Claims struct {
-    UserID uint
-    jwt.StandardClaims
+	UserID uint
+	jwt.StandardClaims
 }
 
 func createToken(user *models.User) (string, error) {
-    // Create JWT claims
-    claims := &Claims{
-        UserID: user.ID,
-        StandardClaims: jwt.StandardClaims{
-            ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-            IssuedAt:  time.Now().Unix(),
-            Subject:   "myapp_user",
-        },
-    }
+	// Create JWT claims
+	claims := &Claims{
+		UserID: user.ID,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			IssuedAt:  time.Now().Unix(),
+			Subject:   "myapp_user",
+		},
+	}
 
-    // Create JWT token
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// Create JWT token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-    // Sign JWT token
-    tokenString, err := token.SignedString(jwtKey)
-    if err != nil {
-        return "", err
-    }
+	// Sign JWT token
+	tokenString, err := token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
 
-    return tokenString, nil
+	return tokenString, nil
 }
 
 func RegisterUser(c *gin.Context) {
@@ -52,12 +52,12 @@ func RegisterUser(c *gin.Context) {
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userLogin.Password), bcrypt.DefaultCost)
-    if err != nil {
-        c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
-        return
-    }
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
+		return
+	}
 
-	exists, _ :=models.UsernameOrEmailExists(&userLogin);
+	exists, _ := models.UsernameOrEmailExists(&userLogin)
 	if exists {
 		c.JSON(400, gin.H{"error": "username or email already exists"})
 		return
@@ -79,7 +79,7 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": user, "token": token})
+	c.JSON(200, gin.H{"user": user, "token": token})
 }
 
 func LoginUser(c *gin.Context) {
@@ -123,7 +123,7 @@ func LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": user, "token": token})
+	c.JSON(200, gin.H{"user": user, "token": token})
 }
 
 func userFieldIsEmail(emailOrUsername string) bool {
