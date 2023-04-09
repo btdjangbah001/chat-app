@@ -9,10 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(chat bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// tokenString := c.GetHeader("Authorization")
-		tokenString := c.Param("token")
+		var tokenString string
+		if chat {
+			tokenString = c.Param("token")
+		} else {
+			tokenString = c.GetHeader("Authorization")
+		}
 		if tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return

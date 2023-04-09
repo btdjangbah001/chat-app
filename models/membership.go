@@ -30,20 +30,20 @@ func (membership *Membership) DeleteMembership() (err error) {
 	return nil
 }
 
-func CheckCommonMembershipForTwoUsers(user1ID uint, user2ID uint) (*[]uint, error){
+func CheckCommonMembershipForTwoUsers(user1ID uint, user2ID uint) (*[]uint, error) {
 	var memberships []Membership
 	var groupIDs []uint
 	err := DB.Where("user_id = ?", user1ID).Find(&memberships).Error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var memberships2 []Membership
 	err = DB.Where("user_id = ?", user2ID).Find(&memberships2).Error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, membership := range memberships {
 		for _, membership2 := range memberships2 {
 			if membership.GroupID == membership2.GroupID {
@@ -78,4 +78,31 @@ func GetGroupParticipants(groupID uint) (*[]uint, error) {
 		userIDs = append(userIDs, membership.UserID)
 	}
 	return &userIDs, nil
+}
+
+func GetGroupParticipantsExceptUser(groupID uint, userID uint) (*[]uint, error) {
+	var memberships []Membership
+	err := DB.Where("group_id = ? AND user_id != ?", groupID, userID).Find(&memberships).Error
+	if err != nil {
+		return nil, err
+	}
+	var userIDs []uint
+	for _, membership := range memberships {
+		userIDs = append(userIDs, membership.UserID)
+	}
+	return &userIDs, nil
+}
+
+func AddParticipantsWithUsernamesToGroup(groupID uint, usernames []string) error {
+	for _, username := range usernames {
+		user, err := GetUserByUsername(username)
+		if err != nil {
+			return err
+		}
+		err = AddUserToGroup(user.ID, groupID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

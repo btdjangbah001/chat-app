@@ -8,6 +8,7 @@
 2. Users should be able to create chat groups and add other users by their usernames
 3. Users should be able to have profile pictures
 4. Users should be able to leave groups
+5. Group owners must assign a successor before they can leave a group they own
 
 ### Extra Features
 
