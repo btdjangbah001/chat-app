@@ -51,7 +51,7 @@ func ChatHandler(c *gin.Context) {
 			if err != nil {
 				_ = fmt.Errorf("error reading message from WebSocket: %v", err)
 				// Handle the error
-				continue
+				break
 			}
 
 			messageChan <- messageBytes
@@ -67,7 +67,7 @@ func ChatHandler(c *gin.Context) {
 			if err != nil {
 				_ = fmt.Errorf("error unmarshalling message: %v", err)
 				// Handle the error
-				continue
+				break
 			}
 			fmt.Printf(message.Content)
 
@@ -94,7 +94,7 @@ func ChatHandler(c *gin.Context) {
 					err := SendMessage(participant, &message)
 					if err != nil {
 						// Handle the error
-						continue
+						break
 					}
 				}
 			}

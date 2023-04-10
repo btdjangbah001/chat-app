@@ -60,5 +60,12 @@ func SendUnreadMessages(user *models.User) error {
 			return err
 		}
 	}
+
+	err := models.DeleteUnreadMessagesForUser(user.ID)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

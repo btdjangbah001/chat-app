@@ -49,3 +49,11 @@ func GetUnreadMessagesForUser(userID uint) (*[]UnsentMessage, error) {
 	}
 	return &messages, nil
 }
+
+func DeleteUnreadMessagesForUser(userID uint) error {
+	err := DB.Where("recipient_id = ?", userID).Delete(&UnsentMessage{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
