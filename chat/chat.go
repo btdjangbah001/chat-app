@@ -28,7 +28,6 @@ func ChatHandler(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
 		return
 	}
-	// defer ws.Close()
 
 	user := utilities.GetLoggedInUser(c)
 
@@ -44,7 +43,7 @@ func ChatHandler(c *gin.Context) {
 	// Create a channel for incoming messages
 	messageChan := make(chan []byte)
 
-	// Start a goroutine to read incoming messages from the WebSocket connection and send them to the channel
+	// Read incoming messages from the WebSocket connection and send them to the channel
 	go func() {
 		for {
 			_, messageBytes, err := ws.ReadMessage()
@@ -58,7 +57,7 @@ func ChatHandler(c *gin.Context) {
 		}
 	}()
 
-	// Start a goroutine to handle incoming messages from the channel
+	// Handle incoming messages from the channel
 	go func() {
 		for messageBytes := range messageChan {
 			// Process the message (send to the appropriate recipients, store in the database, etc.)
@@ -67,9 +66,8 @@ func ChatHandler(c *gin.Context) {
 			if err != nil {
 				_ = fmt.Errorf("error unmarshalling message: %v", err)
 				// Handle the error
-				break
+				continue
 			}
-			fmt.Printf(message.Content)
 
 			switch message.Type {
 			case models.PRIVATE:
@@ -91,6 +89,7 @@ func ChatHandler(c *gin.Context) {
 				}
 
 				for _, participant := range *groupParticipants {
+					message.RecipientID = participant
 					err := SendMessage(participant, &message)
 					if err != nil {
 						// Handle the error

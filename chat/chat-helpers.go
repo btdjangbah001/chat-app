@@ -24,6 +24,7 @@ func SendMessage(recipient_id uint, message *models.Message) error {
 			SenderID:       message.SenderID,
 			SenderUsername: message.SenderUsername,
 			Type:           message.Type,
+			GroupID:        message.GroupID,
 		}
 		keepUnsentMessages(&unsentMessage)
 	} else {

@@ -54,7 +54,7 @@ loginForm.addEventListener("submit", async function (event) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       // Redirect to chat page
-      window.location.href = "/chat.html";
+      window.location.href = "/chat-app-fe/chat.html";
     })
     .catch((error) => console.error(error));
 });

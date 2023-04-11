@@ -9,7 +9,6 @@ type User struct {
 	Password       string `json:"password" gorm:"not null"`
 	About          string `json:"about"`
 	ProfilePicture string `json:"profile_picture"`
-	// Ws             *websocket.Conn `json:"ws"`
 }
 
 type UserSignUp struct {
