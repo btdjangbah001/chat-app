@@ -35,5 +35,10 @@ func ConnectDatabase() {
 		return
 	}
 
+	err = database.AutoMigrate(&UnsentAcknowledgement{})
+	if err != nil {
+		return
+	}
+
 	DB = database
 }

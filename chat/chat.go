@@ -11,11 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
-	Type string          `json:"type"`
-	Data json.RawMessage `json:"data"`
-}
-
 func ChatHandler(c *gin.Context) {
 	// Upgrade the HTTP request to a WebSocket connection
 	upgrader := websocket.Upgrader{
@@ -39,6 +34,12 @@ func ChatHandler(c *gin.Context) {
 	// Add the connection to the map of connections
 	AddConnection(user.ID, ws)
 
+	if err = SendUnreadAcknowledgements(user); err != nil {
+		_ = fmt.Errorf("error sending unread acknowledgements: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
+		return
+	}
+
 	if err = SendUnreadMessages(user); err != nil {
 		_ = fmt.Errorf("error sending unread messages: %v", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "something went wrong please try again"})
@@ -46,12 +47,12 @@ func ChatHandler(c *gin.Context) {
 	}
 
 	// Create a channel for incoming messages
-	messageChan := make(chan Message)
+	messageChan := make(chan IncomingMessage)
 
 	// Read incoming messages from the WebSocket connection and send them to the channel
 	go func() {
 		for {
-			var message Message
+			var message IncomingMessage
 			err := ws.ReadJSON(&message)
 			if err != nil {
 				_ = fmt.Errorf("error reading message from WebSocket: %v", err)
@@ -69,7 +70,6 @@ func ChatHandler(c *gin.Context) {
 		for msg := range messageChan {
 			switch msg.Type {
 			case "message":
-				fmt.Printf("message")
 				// Process the message (send to the appropriate recipients, store in the database, etc.)
 				err := HandleMessage(&msg)
 				if err != nil {
@@ -77,18 +77,32 @@ func ChatHandler(c *gin.Context) {
 				}
 
 			case "acknowlegdement":
-				continue
+				HandleAcknowlegdement(&msg)
 			}
 
 		}
 	}()
 }
 
-func HandleMessage(msg *Message) error {
+func HandleMessage(msg *IncomingMessage) error {
 	var message models.Message
 	err := json.Unmarshal(msg.Data, &message)
 	if err != nil {
 		_ = fmt.Errorf("error unmarshalling message: %v", err)
+		// Handle the error
+		return err
+	}
+
+	// Send acknowlegdement that the message was received
+	ack := models.Acknowledgement{
+		MessageID:  message.MessageID,
+		ReceiverID: message.RecipientID,
+		GroupID:    message.GroupID,
+		Status:     models.SENT,
+	}
+
+	if err = SendAcknowledgement(&ack, message.SenderID); err != nil {
+		_ = fmt.Errorf("error sending acknowlegdement: %v", err)
 		// Handle the error
 		return err
 	}
@@ -124,7 +138,7 @@ func HandleMessage(msg *Message) error {
 	return nil
 }
 
-func HandleAcknowlegdement(msg *Message) error {
+func HandleAcknowlegdement(msg *IncomingMessage) error {
 	var ack models.Acknowledgement
 	err := json.Unmarshal(msg.Data, &ack)
 	if err != nil {
@@ -132,6 +146,8 @@ func HandleAcknowlegdement(msg *Message) error {
 		// Handle the error
 		return err
 	}
+
+	SendAcknowledgement(&ack, ack.ReceiverID)
 
 	return nil
 }

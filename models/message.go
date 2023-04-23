@@ -9,6 +9,7 @@ const (
 
 type Message struct {
 	Content        string `json:"content"`
+	MessageID      uint   `json:"message_id"`
 	SenderID       uint   `json:"sender_id"`
 	SenderUsername string `json:"sender_username"`
 	RecipientID    uint   `json:"recipient_id"`
@@ -19,6 +20,7 @@ type Message struct {
 
 type UnsentMessage struct {
 	Content        string `json:"content"`
+	MessageID      uint   `json:"message_id"`
 	SenderID       uint   `json:"sender_id"`
 	SenderUsername string `json:"sender_username"`
 	RecipientID    uint   `json:"recipient_id"`
@@ -28,6 +30,7 @@ type UnsentMessage struct {
 
 type ClientMessage struct {
 	Content        string `json:"content"`
+	MessageID      uint   `json:"message_id"`
 	SenderUsername string `json:"sender_username"`
 	Type           Type   `json:"type"`
 	GroupID        uint   `json:"group_id"`
