@@ -25,7 +25,7 @@ func AddConnection(userId uint, conn *websocket.Conn) {
 		connectionsMutex.Lock()
 		defer connectionsMutex.Unlock()
 
-		fmt.Printf("Connection closed for user %d", userId)
+		fmt.Printf("Connection closed for user %d\n", userId)
 		// Remove the connection from the map of active connections
 		delete(Connections, userId)
 

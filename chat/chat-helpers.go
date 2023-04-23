@@ -2,7 +2,6 @@ package chat
 
 import (
 	"github.com/btdjangbah001/chat-app/models"
-	"github.com/gorilla/websocket"
 )
 
 func keepUnsentMessages(message *models.UnsentMessage) error {
@@ -14,8 +13,6 @@ func keepUnsentMessages(message *models.UnsentMessage) error {
 }
 
 func SendMessage(recipient_id uint, message *models.Message) error {
-	var ws *websocket.Conn
-
 	ws, ok := Connections[recipient_id]
 	if !ok {
 		unsentMessage := models.UnsentMessage{
@@ -68,5 +65,20 @@ func SendUnreadMessages(user *models.User) error {
 		return err
 	}
 
+	return nil
+}
+
+func SendAcknowledgement(acknowledgement *models.Acknowledgement, receiver_id uint) error {
+	ws, ok := Connections[receiver_id]
+	if !ok {
+		// Handle the error
+		return nil
+	} else {
+		err := ws.WriteJSON(acknowledgement)
+		if err != nil {
+			// Handle the error
+			return err
+		}
+	}
 	return nil
 }

@@ -28,15 +28,19 @@ chatForm.addEventListener("submit", (event) => {
   messageInput.value = "";
 
   const message = {
-    content: content,
-    sender_id: user.id,
-    sender_username: user.username,
-    recipient_id: +receiverId.value,
-    type: 0,
+    type: "message",
+    data: {
+      content: content,
+      sender_id: user.id,
+      sender_username: user.username,
+      recipient_id: +receiverId.value,
+      type: 0,
+    },
   };
 
   addMessage(message, "You");
 
+  console.log(`Message sent: ${JSON.stringify(message)}`);
   ws.send(JSON.stringify(message));
 });
 
@@ -46,12 +50,19 @@ const chatBox = document.querySelector(".chat-box");
 // Function to add a message to the chat box
 function addMessage(message, sender = "") {
   const messageElement = document.createElement("div");
-  console.log(message.content);
-
-  messageElement.className = "chat-message";
-  messageElement.innerHTML = `<span>${
-    !sender ? message.sender_username : sender
-  }:</span> ${message.content}`;
+  if (sender) {
+    console.log(message.data.content);
+    messageElement.className = "chat-message";
+    messageElement.innerHTML = `<span>${
+      !sender ? message.sender_username : sender
+    }:</span> ${message.data.content}`;
+  } else {
+    console.log(message.content);
+    messageElement.className = "chat-message";
+    messageElement.innerHTML = `<span>${
+      !sender ? message.sender_username : sender
+    }:</span> ${message.content}`;
+  }
 
   chatBox.appendChild(messageElement);
   chatBox.scrollTop = chatBox.scrollHeight;
