@@ -18,13 +18,14 @@
 
 ## Building from source
 
-1. Make sure you have go installed. You can get it from the official site [Go offical site](https://go.dev/dl/)
+1. Make sure you have go installed. You can get it from [Go offical site](https://go.dev/dl/)
 2. Make sure you have Postgres DB installed. You can get it from [Postgres official site](https://www.postgresql.org/download/)
 3. Clone the latest changes to your local machine `git clone https://github.com/btdjangbah001/chat-app.git`
 4. Run `go get` to install dependencies
-5. Navigate to `/models/setup.go` and change database credentials `dns` to your own.
-6. Run `go run main.go` to start the application.
-7. If you are it running on your local machine you can access the app on `http://localhost:8080`.
+5. Navigate to `/models/setup.go` and change database credentials by changing `dns` variable to `"host=<your_database_domain> password=<your_database_password> dbname=<your_database_name> port=<your_database_port> sslmode=disable"`
+6. To use a different database you can just change the database driver into whatever you want but note it was built with RDBMS in mind.
+7. Run `go run main.go` to start the application.
+8. If you are running it on your local machine you can access the app on `http://localhost:8080`.
 
 ### Pro-Tip
 
