@@ -36,7 +36,7 @@ to install dependencies
 
 5. Navigate to `/models/setup.go` and change database credentials by changing `dns` variable to
 
-````
+```
 "host=<your_database_domain> password=<your_database_password> dbname=<your_database_name> port=<your_database_port> sslmode=disable"
 ```
 
@@ -44,10 +44,8 @@ to install dependencies
 
 7. Run
 
-````
-
+```
 go run main.go
-
 ```
 
 to start the application.
@@ -55,12 +53,9 @@ to start the application.
 8. If you are running it on your local machine you can access the app on
 
 ```
-
 http://localhost:8080
-
 ```
 
 ### Pro-Tip
 
 To test the app, there's a simple UI in `/chat-app-fe/index.html` you can use.
-```
