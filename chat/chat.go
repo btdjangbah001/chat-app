@@ -77,7 +77,10 @@ func ChatHandler(c *gin.Context) {
 				}
 
 			case "acknowlegdement":
-				HandleAcknowlegdement(&msg)
+				err = HandleAcknowlegdement(&msg)
+				if err != nil {
+					continue
+				}
 			}
 
 		}
