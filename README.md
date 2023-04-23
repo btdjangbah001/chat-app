@@ -45,7 +45,7 @@ to install dependencies
 7. Run
 
 ```
-go run main.go
+go run .
 ```
 
 to start the application.

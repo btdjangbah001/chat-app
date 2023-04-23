@@ -48,16 +48,18 @@ func ChatHandler(c *gin.Context) {
 
 	// Create a channel for incoming messages
 	messageChan := make(chan IncomingMessage)
+	done := make(chan bool)
 
 	// Read incoming messages from the WebSocket connection and send them to the channel
 	go func() {
 		for {
+			fmt.Println("Message reading for user ", user.ID)
 			var message IncomingMessage
 			err := ws.ReadJSON(&message)
 			if err != nil {
 				_ = fmt.Errorf("error reading message from WebSocket: %v", err)
 				fmt.Println("error reading message from WebSocket: ", err)
-				// Handle the error
+				close(done)
 				break
 			}
 
@@ -67,22 +69,30 @@ func ChatHandler(c *gin.Context) {
 
 	// Handle incoming messages from the channel
 	go func() {
-		for msg := range messageChan {
-			switch msg.Type {
-			case "message":
-				// Process the message (send to the appropriate recipients, store in the database, etc.)
-				err := HandleMessage(&msg)
-				if err != nil {
-					continue
+		fmt.Println("Starting message handler for user ", user.ID)
+		for {
+			select {
+			case <-done:
+				fmt.Println("Closing message handler for user ", user.ID)
+				close(messageChan)
+				return
+			case msg := <-messageChan:
+				switch msg.Type {
+				case "message":
+					// Process the message (send to the appropriate recipients, store in the database, etc.)
+					err := HandleMessage(&msg)
+					if err != nil {
+						continue
+					}
+
+				case "acknowlegdement":
+					err = HandleAcknowlegdement(&msg)
+					if err != nil {
+						continue
+					}
 				}
 
-			case "acknowlegdement":
-				err = HandleAcknowlegdement(&msg)
-				if err != nil {
-					continue
-				}
 			}
-
 		}
 	}()
 }
