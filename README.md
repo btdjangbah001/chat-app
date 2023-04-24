@@ -59,3 +59,29 @@ http://localhost:8080
 ### Pro-Tip
 
 To test the app, there's a simple UI in `/chat-app-fe/index.html` you can use.
+
+## License
+
+```
+Copyright © 2023 Bernard Tetteh Djangbah
+
+This project is a free software licensed under GPL v3.0
+It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
+```
+Being Open Source doesn't mean you can just make a copy of the app and host it or sell a closed source copy of the same.
+Read the following carefully:
+1. Any copy of a software under GPL must be under same license. So you can't upload the app on a closed source
+  app repository without distributing the source code.
+2. You can't sell any copied/modified version of the app under any "non-free" license.
+   You must provide the copy with the original software or with instructions on how to obtain original software,
+   should clearly state all changes, should clearly disclose full source code, should include same license
+   and all copyrights should be retained.
+
+In simple words, You can ONLY use the source code of this app for `Open Source` Project under `GPL v3.0` or later
+with all your source code CLEARLY DISCLOSED on any code hosting platform like GitHub, with clear INSTRUCTIONS on
+how to obtain the original software, should clearly STATE ALL CHANGES made and should RETAIN all copyrights.
+Use of this software under any "non-free" license is NOT permitted.
+```
