@@ -1,4 +1,4 @@
-# BASIC CHAT APP
+# QUICKCHAT BACKEND
 
 ## Functional requirements
 
