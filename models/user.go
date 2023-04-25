@@ -1,6 +1,10 @@
 package models
 
-import "github.com/gorilla/websocket"
+import (
+	"regexp"
+
+	"github.com/gorilla/websocket"
+)
 
 type User struct {
 	ID             uint   `json:"id" gorm:"primary_key"`
@@ -111,4 +115,9 @@ func UpdateUserWebsocket(user *User, ws *websocket.Conn) error {
 		return err
 	}
 	return nil
+}
+
+func UserFieldIsEmail(emailOrUsername string) bool {
+	re := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return re.MatchString(emailOrUsername)
 }
