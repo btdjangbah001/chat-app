@@ -98,12 +98,9 @@ func HandleStatus(msg *IncomingMessage) error {
 		if err = HandleUserOnlineOrOfflineStatus(&status, &outMsg); err != nil {
 			return err
 		}
-	case models.TYPING:
-		if err = HandleTypingStatus(&status, &outMsg); err != nil {
-			return err
-		}
 	case models.THINKING:
-		if err = HandleThinkingStatus(&status, &outMsg); err != nil {
+	case models.TYPING:
+		if err = HandleTypingThinkingStatus(&status, &outMsg); err != nil {
 			return err
 		}
 	}
@@ -130,7 +127,7 @@ func HandleUserOnlineOrOfflineStatus(status *models.Status, out *OutgoingMessage
 	return nil
 }
 
-func HandleTypingStatus(status *models.Status, out *OutgoingMessage) error {
+func HandleTypingThinkingStatus(status *models.Status, out *OutgoingMessage) error {
 	ws, ok := Connections[status.ReceiverID]
 	if !ok {
 		return nil
@@ -138,25 +135,11 @@ func HandleTypingStatus(status *models.Status, out *OutgoingMessage) error {
 	data := models.Status{
 		SenderID:   status.SenderID,
 		ReceiverID: status.ReceiverID,
-		Activity:   models.TYPING,
 	}
-	out.Data = data
-	if err := ws.WriteJSON(out); err != nil {
-		_ = fmt.Errorf("error sending typing status: %v", err)
-		return err
-	}
-	return nil
-}
-
-func HandleThinkingStatus(status *models.Status, out *OutgoingMessage) error {
-	ws, ok := Connections[status.ReceiverID]
-	if !ok {
-		return nil
-	}
-	data := models.Status{
-		SenderID:   status.SenderID,
-		ReceiverID: status.ReceiverID,
-		Activity:   models.THINKING,
+	if status.Activity == models.TYPING {
+		data.Activity = models.TYPING
+	} else {
+		data.Activity = models.THINKING
 	}
 	out.Data = data
 	if err := ws.WriteJSON(out); err != nil {
