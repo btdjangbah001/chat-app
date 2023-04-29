@@ -81,6 +81,11 @@ func ChatHandler(c *gin.Context) {
 				if err != nil {
 					continue
 				}
+			case "status":
+				err = HandleStatus(&msg)
+				if err != nil {
+					continue
+				}
 			}
 		}
 	}()

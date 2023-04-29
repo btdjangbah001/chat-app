@@ -152,3 +152,16 @@ func SendUnreadAcknowledgements(user *models.User) error {
 
 	return nil
 }
+
+func SendStatus(msg *OutgoingMessage, receiverID uint) error {
+	ws, ok := Connections[receiverID]
+	if !ok {
+		return nil
+	}
+	err := ws.WriteJSON(msg)
+	if err != nil {
+		// Handle the error
+		return err
+	}
+	return nil
+}

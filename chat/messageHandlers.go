@@ -70,7 +70,98 @@ func HandleAcknowlegdement(msg *IncomingMessage) error {
 		return err
 	}
 
-	SendAcknowledgement(&ack, ack.ReceiverID)
+	if err = SendAcknowledgement(&ack, ack.ReceiverID); err != nil {
+		_ = fmt.Errorf("error sending acknowlegdement: %v", err)
+		// Handle the error
+		return err
+	}
 
+	return nil
+}
+
+func HandleStatus(msg *IncomingMessage) error {
+	var status models.Status
+	err := json.Unmarshal(msg.Data, &status)
+	if err != nil {
+		_ = fmt.Errorf("error unmarshalling status: %v", err)
+		// Handle the error
+		return err
+	}
+
+	outMsg := OutgoingMessage{
+		Type: "status",
+	}
+
+	switch status.Activity {
+	case models.OFFLINE:
+	case models.ONLINE:
+		if err = HandleUserOnlineOrOfflineStatus(&status, &outMsg); err != nil {
+			return err
+		}
+	case models.TYPING:
+		if err = HandleTypingStatus(&status, &outMsg); err != nil {
+			return err
+		}
+	case models.THINKING:
+		if err = HandleThinkingStatus(&status, &outMsg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func HandleUserOnlineOrOfflineStatus(status *models.Status, out *OutgoingMessage) error {
+	data := models.Status{
+		SenderID:   status.SenderID,
+		ReceiverID: status.ReceiverID,
+	}
+	_, ok := Connections[status.ReceiverID]
+	if !ok {
+		data.Activity = models.OFFLINE
+	} else {
+		data.Activity = models.ONLINE
+	}
+	out.Data = data
+	if err := SendStatus(out, status.SenderID); err != nil {
+		_ = fmt.Errorf("error sending status: %v", err)
+		return err
+	}
+	return nil
+}
+
+func HandleTypingStatus(status *models.Status, out *OutgoingMessage) error {
+	ws, ok := Connections[status.ReceiverID]
+	if !ok {
+		return nil
+	}
+	data := models.Status{
+		SenderID:   status.SenderID,
+		ReceiverID: status.ReceiverID,
+		Activity:   models.TYPING,
+	}
+	out.Data = data
+	if err := ws.WriteJSON(out); err != nil {
+		_ = fmt.Errorf("error sending typing status: %v", err)
+		return err
+	}
+	return nil
+}
+
+func HandleThinkingStatus(status *models.Status, out *OutgoingMessage) error {
+	ws, ok := Connections[status.ReceiverID]
+	if !ok {
+		return nil
+	}
+	data := models.Status{
+		SenderID:   status.SenderID,
+		ReceiverID: status.ReceiverID,
+		Activity:   models.THINKING,
+	}
+	out.Data = data
+	if err := ws.WriteJSON(out); err != nil {
+		_ = fmt.Errorf("error sending typing status: %v", err)
+		return err
+	}
 	return nil
 }
